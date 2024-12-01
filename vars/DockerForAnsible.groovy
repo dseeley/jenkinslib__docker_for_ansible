@@ -1,6 +1,10 @@
 #!groovy
 
-def call(String image_name="", String build_opts = "", String ansible_version = "") {
+def call(Map args) {
+    String image_name = args.image_name ?: ""
+    String build_opts = args.build_opts ?: ""
+    String ansible_version = args.ansible_version ?: ""
+
     if (ansible_version == "") {
         def pypi_ansible = ["curl", "-s", "-H", "Accept: application/json", "-H", "Content-type: application/json", "GET", "https://pypi.org/pypi/ansible/json"].execute().text
         def pypi_ansible_latest = new groovy.json.JsonSlurper().parseText(pypi_ansible).info.version        // Use `info.version` instead of `.releases.keySet()[-1]`, to avoid alpha and release candidate versions
