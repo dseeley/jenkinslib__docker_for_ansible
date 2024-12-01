@@ -25,14 +25,13 @@ class DockerForAnsible {
     }
 
     def build_image(Map args) {
-        String image_name = args.image_name ?: ""
-        String build_opts = args.build_opts ?: ""
-        String ansible_version = args.ansible_version ?: ""
+        String image_name = args && args.image_name ? args.image_name : ""
+        String build_opts = args && args.build_opts ? args.build_opts : ""
+        String ansible_version = args && args.ansible_version ? args.ansible_version : ""
 
         if (ansible_version == "") {
             def pypi_ansible = ["curl", "-s", "-H", "Accept: application/json", "-H", "Content-type: application/json", "GET", "https://pypi.org/pypi/ansible/json"].execute().text
-            def pypi_ansible_latest = new JsonSlurper().parseText(pypi_ansible).info.version
-            ansible_version = "${pypi_ansible_latest}"
+            ansible_version = new JsonSlurper().parseText(pypi_ansible).info.version
         }
 
         if (image_name == "") {
