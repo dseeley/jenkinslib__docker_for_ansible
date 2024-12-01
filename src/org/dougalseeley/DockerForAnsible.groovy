@@ -13,9 +13,9 @@ class DockerForAnsible {
 
     String get_parent_network() {
         String docker_parent_net_str = ""
-        if (script.sh(script: 'grep -sq "docker\\|lxc" /proc/1/cgroup', returnStatus: true) == 0) {
+        if (script.sh(script: 'docker inspect $(hostname)', returnStatus: true) == 0) {
             script.println("Running in docker.  Getting network to pass to docker-in-docker containers...")
-            def docker_parent_net_id = script.sh(script: 'docker inspect  $(grep -oP \'(?<=docker-)[a-f0-9]+(?=\\.scope)\' /proc/1/cgroup | head -1) -f "{{ range .NetworkSettings.Networks }}{{println .NetworkID}}{{end}}" | head -n 1', returnStdout: true).trim()
+            def docker_parent_net_id = script.sh(script: 'docker inspect  $(hostname) -f "{{ range .NetworkSettings.Networks }}{{println .NetworkID}}{{end}}" | head -n 1', returnStdout: true).trim()
             docker_parent_net_str = "--network ${docker_parent_net_id}"
             script.println("docker_parent_net_str: ${docker_parent_net_str}")
         } else {
