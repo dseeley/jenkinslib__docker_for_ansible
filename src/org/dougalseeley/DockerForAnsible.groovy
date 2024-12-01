@@ -11,6 +11,7 @@ class DockerForAnsible {
         this.script = script
     }
 
+    // If we're running in Docker, get the network ID of the parent container (necessary for docker-in-docker builds to get network access)
     String get_parent_network() {
         String docker_parent_net_str = ""
         if (script.sh(script: 'docker inspect $(hostname)', returnStatus: true) == 0) {
