@@ -1,17 +1,25 @@
 #!groovy
 
-def call(String image_name, String build_opts = "", String ansible_version = "") {
+def call(String image_name="", String build_opts = "", String ansible_version = "") {
+    if (ansible_version == "") {
+        def pypi_ansible = ["curl", "-s", "-H", "Accept: application/json", "-H", "Content-type: application/json", "GET", "https://pypi.org/pypi/ansible/json"].execute().text
+        def pypi_ansible_latest = new groovy.json.JsonSlurper().parseText(pypi_ansible).info.version        // Use `info.version` instead of `.releases.keySet()[-1]`, to avoid alpha and release candidate versions
+        ansible_version = "${pypi_ansible_latest}"
+    }
+
+    // if image_name is not set, use the default image name, otherwise ensure the provided name is lower case
+    if (image_name == "") {
+        image_name = "ubuntu_ansible_v${ansible_version}"
+    }
+    else {
+        image_name = image_name.toLowerCase()
+    }
+
     // Create a lock to prevent building the same image in parallel
     lock("IMAGEBUILDLOCK__${image_name}__${env.NODE_NAME}") {
         def jenkins_username = sh(script: 'whoami', returnStdout: true).trim()
         def jenkins_uid = sh(script: "id -u ${jenkins_username}", returnStdout: true).trim()
         def jenkins_gid = sh(script: "id -g ${jenkins_username}", returnStdout: true).trim()
-
-        if (ansible_version == "") {
-            def pypi_ansible = ["curl", "-s", "-H", "Accept: application/json", "-H", "Content-type: application/json", "GET", "https://pypi.org/pypi/ansible/json"].execute().text
-            def pypi_ansible_latest = new groovy.json.JsonSlurper().parseText(pypi_ansible).info.version        // Use `info.version` instead of `.releases.keySet()[-1]`, to avoid alpha and release candidate versions
-            ansible_version = "${pypi_ansible_latest}"
-        }
 
         def dockerfile = """
             FROM ubuntu:24.04
