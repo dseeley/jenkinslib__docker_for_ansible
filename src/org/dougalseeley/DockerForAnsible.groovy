@@ -5,7 +5,7 @@ package org.dougalseeley
 import groovy.json.JsonSlurper
 
 class DockerForAnsible {
-    static String get_parent_network() {
+    String get_parent_network() {
         String docker_parent_net_str = ""
         if (sh(script: 'grep -sq "docker\\|lxc" /proc/1/cgroup', returnStatus: true) == 0) {
             println("Running in docker.  Getting network to pass to docker-in-docker containers...")
@@ -19,7 +19,7 @@ class DockerForAnsible {
         return docker_parent_net_str
     }
 
-    static def build_image(Map args) {
+    def build_image(Map args) {
         String image_name = args.image_name ?: ""
         String build_opts = args.build_opts ?: ""
         String ansible_version = args.ansible_version ?: ""
