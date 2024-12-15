@@ -58,7 +58,7 @@ class DockerForAnsible {
                     && apt-get update && apt-get install -y git iproute2 python3 python3-pip \
                     && pip3 --no-cache-dir install --break-system-packages ansible==${ansible_version} \
                     && pip3 --no-cache-dir install --break-system-packages -r \$(pip3 --no-cache-dir show ansible | grep ^Location | sed -r 's/^Location: (.*)/\\1/')/ansible_collections/azure/azcollection/requirements*.txt \
-                    && apt-get install -y python3-jmespath python3-jinja2 python3-boto3 python3-netaddr python3-paramiko python3-libvirt python3-lxml python3-xmltodict python3-pycdlib python3-google-auth python3-dev python3-setuptools python3-wheel
+                    && apt-get install -y python3-boto3 python3-dev python3-google-auth python3-jinja2 python3-jmespath python3-libvirt python3-lxml python3-netaddr python3-paramiko python3-pycdlib python3-setuptools python3-wheel python3-xmltodict
             """.stripIndent()
 
             script.writeFile(file: "Dockerfile_${image_name}", text: dockerfile, encoding: "UTF-8")
