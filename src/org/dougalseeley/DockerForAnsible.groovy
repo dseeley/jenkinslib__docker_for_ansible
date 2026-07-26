@@ -41,13 +41,20 @@ class DockerForAnsible {
             image_name = image_name.toLowerCase()
         }
 
+        // uamqp (azure.azcollection) fails to build on Ubuntu 26.04 / Python 3.14 for older Ansible
+        def ubuntu_version = "26.04"
+        def ansible_major = ansible_version.tokenize('.')[0] as int
+        if (ansible_major < 14) {
+            ubuntu_version = "24.04"
+        }
+
         script.lock("IMAGEBUILDLOCK__${image_name}__${script.env.NODE_NAME}") {
             def jenkins_username = script.sh(script: 'whoami', returnStdout: true).trim()
             def jenkins_uid = script.sh(script: "id -u ${jenkins_username}", returnStdout: true).trim()
             def jenkins_gid = script.sh(script: "id -g ${jenkins_username}", returnStdout: true).trim()
 
             def dockerfile = """
-                FROM ubuntu:26.04
+                FROM ubuntu:${ubuntu_version}
                 ARG DEBIAN_FRONTEND=noninteractive
                 ENV TZ=UTC
                 SHELL ["/bin/bash", "-c"]
@@ -55,10 +62,11 @@ class DockerForAnsible {
                 RUN groupadd -g ${jenkins_gid} ${jenkins_username} && useradd -m -u ${jenkins_uid} -g ${jenkins_gid} -s /bin/bash ${jenkins_username}
                 
                 RUN ln -snf /usr/share/zoneinfo/\$TZ /etc/localtime && echo \$TZ > /etc/timezone \
-                    && apt-get update && apt-get install -y git iproute2 python3 python3-pip \
+                    && apt-get update && apt-get install -y git iproute2 python3 python3-pip python3-dev build-essential cmake libssl-dev pkg-config \
                     && pip3 --no-cache-dir install --break-system-packages ansible==${ansible_version} \
                     && pip3 --no-cache-dir install --break-system-packages -r \$(pip3 --no-cache-dir show ansible | grep ^Location | sed -r 's/^Location: (.*)/\\1/')/ansible_collections/azure/azcollection/requirements*.txt \
-                    && apt-get install -y python3-boto3 python3-dev python3-google-auth python3-jinja2 python3-jmespath python3-libvirt python3-lxml python3-netaddr python3-paramiko python3-pycdlib python3-setuptools python3-wheel python3-xmltodict \
+                    && apt-get install -y python3-boto3 python3-google-auth python3-jinja2 python3-jmespath python3-libvirt python3-lxml python3-netaddr python3-paramiko python3-pycdlib python3-setuptools python3-wheel python3-xmltodict \
+                    && apt-get purge -y build-essential cmake libssl-dev pkg-config \
                     && apt-get -y --purge autoremove && apt-get -y autoclean && /bin/rm -rf /var/cache/apt/* /var/lib/apt/lists/*
                     
             """.stripIndent()
